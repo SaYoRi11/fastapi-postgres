@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from db import database, notes, users
 from fastapi_login import LoginManager
 import os
+import datetime
 
 class User(BaseModel):
     email: str
