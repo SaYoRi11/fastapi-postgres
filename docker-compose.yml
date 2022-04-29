@@ -23,12 +23,34 @@ services:
       - 5432:5432
       
   nginx-proxy:
-    image: nginxproxy/nginx-proxy
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /var/run/docker.sock:/tmp/docker.sock:ro
+   image: jwilder/nginx-proxy
+   labels:
+     com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: true
+   ports:
+     - '80:80'
+     - '443:443'
+   volumes:
+     - ./volumes/vhost.d:/etc/nginx/vhost.d
+     - /var/run/docker.sock:/tmp/docker.sock:ro
+     - certs:/etc/nginx/certs
+     - nginx_html:/usr/share/nginx/html
+
+  letsencrypt:
+   image: jrcs/letsencrypt-nginx-proxy-companion
+   volumes_from:
+     - nginx-proxy
+   volumes:
+     - acme:/etc/acme.sh
+     - /var/run/docker.sock:/var/run/docker.sock:ro
+   depends_on:
+     - nginx-proxy
+   environment:
+     DEBUG: 1
+     NGINX_PROXY_CONTAINER: nginx-proxy
+     LETSENCRYPT_EMAIL: $LETSENCRYPT_EMAIL  
 
 volumes:
     postgres_data:
+    acme:
+    certs:
+    nginx_html:
