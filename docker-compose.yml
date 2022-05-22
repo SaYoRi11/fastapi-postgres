@@ -13,6 +13,8 @@ services:
       - ./.env
     depends_on:
       - db
+    networks:
+      - nginx-proxy
   db:
     image: postgres:13-alpine
     volumes:
@@ -21,36 +23,45 @@ services:
       - ./.env
     ports:
       - 5432:5432
-      
+    networks:
+      - nginx-proxy
   nginx-proxy:
-   image: jwilder/nginx-proxy
-   labels:
-     com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: true
-   ports:
-     - '80:80'
-     - '443:443'
-   volumes:
-     - ./volumes/vhost.d:/etc/nginx/vhost.d
-     - /var/run/docker.sock:/tmp/docker.sock:ro
-     - certs:/etc/nginx/certs
-     - nginx_html:/usr/share/nginx/html
+    image: jwilder/nginx-proxy
+    labels:
+      com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: true
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./volumes/vhost.d:/etc/nginx/vhost.d
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - certs:/etc/nginx/certs
+      - nginx_html:/usr/share/nginx/html
+    networks:
+      - nginx-proxy
 
   letsencrypt:
-   image: jrcs/letsencrypt-nginx-proxy-companion
-   volumes_from:
-     - nginx-proxy
-   volumes:
-     - acme:/etc/acme.sh
-     - /var/run/docker.sock:/var/run/docker.sock:ro
-   depends_on:
-     - nginx-proxy
-   environment:
-     DEBUG: 1
-     NGINX_PROXY_CONTAINER: nginx-proxy
-     LETSENCRYPT_EMAIL: $LETSENCRYPT_EMAIL  
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    volumes_from:
+      - nginx-proxy
+    volumes:
+      - acme:/etc/acme.sh
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - nginx-proxy
+    environment:
+      DEBUG: 1
+      NGINX_PROXY_CONTAINER: nginx-proxy
+      LETSENCRYPT_EMAIL: gsuraj1111@gmail.com
+
 
 volumes:
-    postgres_data:
-    acme:
-    certs:
-    nginx_html:
+  acme:
+  certs:
+  nginx_html:
+  postgres_data:
+
+networks:
+  nginx-proxy:
+    external:
+      name: nginx-proxy
